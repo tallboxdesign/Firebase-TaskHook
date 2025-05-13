@@ -59,7 +59,10 @@ async function sendToWebhook(task: DisplayTask, n8nWebhookUrlEndpoint?: string, 
     try {
       const response = await fetch(n8nWebhookUrlEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TaskHook-Secret-hsbXuTaT': 'OHYI6xJYCxHsdtszL93yWlKcvA7KzB9s'
+        },
         body: JSON.stringify({ event: eventType, task }),
       });
       if (!response.ok) {
@@ -405,7 +408,7 @@ export async function createTaskWithAIPrioritization(
     console.log('N8N Webhook URL not provided for createTask. Skipping webhook.');
   }
 
-  return { task: result.task, error: result.error, aiError: result.aiError, apiKeyAvailable: result.apiKeyAvailable, aiProcessed: result.aiProcessed };
+  return { task: result.task, error: undefined, aiError: result.aiError, apiKeyAvailable: result.apiKeyAvailable, aiProcessed: result.aiProcessed };
 }
 
 
@@ -444,7 +447,7 @@ export async function updateTaskDetailsAndReprioritize(
     console.log('N8N Webhook URL not provided for updateTask. Skipping webhook.');
   }
   
-  return { task: result.task, error: result.error, aiError: result.aiError, apiKeyAvailable: result.apiKeyAvailable, aiProcessed: result.aiProcessed };
+  return { task: result.task, error: undefined, aiError: result.aiError, apiKeyAvailable: result.apiKeyAvailable, aiProcessed: result.aiProcessed };
 }
 
 
