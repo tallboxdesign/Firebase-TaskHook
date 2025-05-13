@@ -46,26 +46,25 @@ const twoWeeksLaterStr = getFormattedDate(14);
 
 // Helper to determine date for "on [day number]" phrases for prompt examples
 const getFormattedDateForDayNumberPrompt = (dayNumber: number, baseDateStr: string = todayStr): string => {
-  const baseDate = new Date(baseDateStr + "T00:00:00Z"); // Ensure UTC context for date-only strings
+  const baseDate = new Date(baseDateStr + "T00:00:00Z"); // Ensure UTC context
   const currentDayInMonth = baseDate.getUTCDate();
   let targetMonth = baseDate.getUTCMonth(); // 0-11
   let targetYear = baseDate.getUTCFullYear();
 
-  if (dayNumber < currentDayInMonth) { // If day has passed in current month, or is same day (implying next occurrence)
+  // If dayNumber is for a past day in the current month OR the same as current day, aim for next month.
+  if (dayNumber <= currentDayInMonth) {
     targetMonth += 1;
-    if (targetMonth > 11) { // Month overflow
-      targetMonth = 0; // January
-      targetYear += 1;
-    }
+    // Month and year rollover is handled by Date.UTC constructor if targetMonth > 11
   }
-  // Create date with targetYear, targetMonth, dayNumber.
-  // Date.UTC handles month/year rollovers correctly.
+  // If dayNumber is for a future day in the current month, month and year remain as is.
+
   const targetDate = new Date(Date.UTC(targetYear, targetMonth, dayNumber));
   return format(targetDate, 'yyyy-MM-dd');
 };
 
 const exampleDay16thCurrentMonth = getFormattedDateForDayNumberPrompt(16, todayStr); // e.g., if today is May 13, this is May 16
 const exampleDay10thNextMonth = getFormattedDateForDayNumberPrompt(10, todayStr);   // e.g., if today is May 13, this is June 10
+const exampleDay13thNextMonth = getFormattedDateForDayNumberPrompt(13, todayStr); // e.g., if today is May 13, this is June 13
 
 const parseTranscriptPrompt = ai.definePrompt({
   name: 'parseVoiceTranscriptPrompt',
@@ -76,9 +75,9 @@ const parseTranscriptPrompt = ai.definePrompt({
 For each identified task, you MUST provide:
 1.  'title': A concise and clear title for the task (e.g., "Buy 2 bags of potatoes", "Call John about the project"). The title should capture the main action and key details, BUT EXCLUDE ANY DATE/TIME PHRASES (like "tomorrow", "next week", "in 5 days").
 2.  'description': The original segment of the transcript that pertains to this specific task, or a slightly cleaned up version if necessary for clarity, BUT EXCLUDE ANY DATE/TIME PHRASES. This description should provide full context of WHAT needs to be done. If the original transcript implies a shared context for multiple tasks (e.g., "Buy X for today and Y for next week"), ensure the description for each task contains that shared context, minus the date/time part. For example, if transcript is "Buy 2kg sausages tomorrow and 5kg next week same day", the description for the second task should be something like "Buy 5kg sausages".
-3.  'dueDate': The due date for the task, if mentioned. Format this strictly as YYYY-MM-DD. If no specific date is mentioned, or if it's ambiguous (e.g., "soon"), set dueDate to an empty string "". Use today's date (${todayStr}) as the reference for relative dates like "tomorrow", "next week". For phrases like "after X days" or "X days later" from a previous date mentioned in the transcript, calculate the date relative to that *previous* date. For phrases like "on [day number]" (e.g., "on 16th", "on the 3rd"):
-    - If the specified day number is later in the current month (today is ${todayStr}), use that day in the current month and year.
-    - If the specified day number has already passed in the current month, or is the current day, use that day in the *next* month. If the current month is December, roll over to January of the next year.
+3.  'dueDate': The due date for the task, if mentioned. Format this strictly as YYYY-MM-DD. If no specific date is mentioned, or if it's ambiguous (e.g., "soon"), set dueDate to an empty string "". Use today's date (${todayStr}) as the reference for relative dates like "tomorrow", "next week". For phrases like "after X days" or "X days later" from a previous date mentioned in the transcript, calculate the date relative to that *previous* date. For phrases like "on [day number]" (e.g., "on 16th", "on the 3rd"), using today's date (${todayStr}) as a reference:
+    - If the specified day number is **greater than** the current day of the month (e.g. "on 16th" when today is the 13th), use that day number in the **current month** and year.
+    - If the specified day number is **less than or equal to** the current day of the month (e.g. "on 10th" or "on 13th" when today is the 13th), use that day number in the **next month**. If this means the next month is January, advance the year accordingly.
 
 Full Transcript:
 "{{{fullTranscript}}}"
@@ -151,6 +150,11 @@ Expected JSON Output for 'parsedTasks' (assuming today is ${todayStr}):
     "title": "Submit report",
     "description": "Submit report",
     "dueDate": "${exampleDay10thNextMonth}"
+  },
+  {
+    "title": "Follow up on email",
+    "description": "Follow up on email",
+    "dueDate": "${exampleDay13thNextMonth}"
   }
 ]
 

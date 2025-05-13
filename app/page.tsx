@@ -616,7 +616,7 @@ export default function HomePage() {
           settings={settings} 
         />
         
-        <StatsGrid onStatClick={handleStatCardClick} />
+        <StatsGrid tasks={tasks} onStatClick={handleStatCardClick} />
 
         <AnimatePresence>
           <motion.div
