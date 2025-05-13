@@ -86,6 +86,15 @@ export async function POST(request: NextRequest) {
 
       const requestHeaderValue = request.headers.get(expectedHeaderName);
 
+const expectedSecret = process.env.N8N_WEBHOOK_SECRET; // Renamed for clarity in log
+      const receivedSecret = request.headers.get(expectedHeaderName); // Using existing variable
+
+      console.log(
+        `[AUTH RUNTIME DEBUG] ` +
+        `Expected: '${expectedSecret}' (Length: ${expectedSecret?.length}), ` +
+        `Received: '${receivedSecret}' (Length: ${receivedSecret?.length}), ` +
+        `Comparison (===): ${expectedSecret === receivedSecret}`
+      );
       if (!requestHeaderValue || requestHeaderValue !== expectedSecretValue) {
         const clientIp = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
         console.warn(`Unauthorized access attempt to n8n webhook. Header '${expectedHeaderName}' was '${requestHeaderValue ? "provided but incorrect" : "missing"}'. IP: ${clientIp}`);
