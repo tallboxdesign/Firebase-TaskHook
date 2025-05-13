@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     if (!disableIncomingWebhookAuth) {
       // Security Check: Validate the secret token using environment variables
-      const expectedHeaderName = 'X-Webhook-Secret'; // As per new requirement
+      const expectedHeaderName = 'X-TaskHook-Secret'; // As per new requirement
       const expectedSecretValue = process.env.N8N_WEBHOOK_SECRET; // As per new requirement
 
       if (!expectedSecretValue) {
@@ -86,8 +86,6 @@ export async function POST(request: NextRequest) {
 
       const requestHeaderValue = request.headers.get(expectedHeaderName);
 
-// Temporary debug logging for N8N incoming webhook auth
-      console.log(`[AUTH DEBUG N8N->APP] Expected: '${expectedSecretValue}', Received: '${requestHeaderValue}', Comparison Result: ${expectedSecretValue === requestHeaderValue}, Auth Disabled State (at this point of check): ${disableIncomingWebhookAuth}`);
       if (!requestHeaderValue || requestHeaderValue !== expectedSecretValue) {
         const clientIp = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
         console.warn(`Unauthorized access attempt to n8n webhook. Header '${expectedHeaderName}' was '${requestHeaderValue ? "provided but incorrect" : "missing"}'. IP: ${clientIp}`);
