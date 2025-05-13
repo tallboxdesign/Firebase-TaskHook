@@ -44,6 +44,29 @@ const fiveDaysLaterStr = getFormattedDate(5);
 const twoWeeksLaterStr = getFormattedDate(14);
 
 
+// Helper to determine date for "on [day number]" phrases for prompt examples
+const getFormattedDateForDayNumberPrompt = (dayNumber: number, baseDateStr: string = todayStr): string => {
+  const baseDate = new Date(baseDateStr + "T00:00:00Z"); // Ensure UTC context for date-only strings
+  const currentDayInMonth = baseDate.getUTCDate();
+  let targetMonth = baseDate.getUTCMonth(); // 0-11
+  let targetYear = baseDate.getUTCFullYear();
+
+  if (dayNumber < currentDayInMonth) { // If day has passed in current month, or is same day (implying next occurrence)
+    targetMonth += 1;
+    if (targetMonth > 11) { // Month overflow
+      targetMonth = 0; // January
+      targetYear += 1;
+    }
+  }
+  // Create date with targetYear, targetMonth, dayNumber.
+  // Date.UTC handles month/year rollovers correctly.
+  const targetDate = new Date(Date.UTC(targetYear, targetMonth, dayNumber));
+  return format(targetDate, 'yyyy-MM-dd');
+};
+
+const exampleDay16thCurrentMonth = getFormattedDateForDayNumberPrompt(16, todayStr); // e.g., if today is May 13, this is May 16
+const exampleDay10thNextMonth = getFormattedDateForDayNumberPrompt(10, todayStr);   // e.g., if today is May 13, this is June 10
+
 const parseTranscriptPrompt = ai.definePrompt({
   name: 'parseVoiceTranscriptPrompt',
   input: {schema: ParseVoiceTranscriptInputSchema.pick({ fullTranscript: true })},
@@ -53,7 +76,9 @@ const parseTranscriptPrompt = ai.definePrompt({
 For each identified task, you MUST provide:
 1.  'title': A concise and clear title for the task (e.g., "Buy 2 bags of potatoes", "Call John about the project"). The title should capture the main action and key details, BUT EXCLUDE ANY DATE/TIME PHRASES (like "tomorrow", "next week", "in 5 days").
 2.  'description': The original segment of the transcript that pertains to this specific task, or a slightly cleaned up version if necessary for clarity, BUT EXCLUDE ANY DATE/TIME PHRASES. This description should provide full context of WHAT needs to be done. If the original transcript implies a shared context for multiple tasks (e.g., "Buy X for today and Y for next week"), ensure the description for each task contains that shared context, minus the date/time part. For example, if transcript is "Buy 2kg sausages tomorrow and 5kg next week same day", the description for the second task should be something like "Buy 5kg sausages".
-3.  'dueDate': The due date for the task, if mentioned. Format this strictly as YYYY-MM-DD. If no specific date is mentioned, or if it's ambiguous (e.g., "soon"), set dueDate to an empty string "". Use today's date (${todayStr}) as the reference for relative dates like "tomorrow", "next week". For phrases like "after X days" or "X days later" from a previous date mentioned in the transcript, calculate the date relative to that *previous* date.
+3.  'dueDate': The due date for the task, if mentioned. Format this strictly as YYYY-MM-DD. If no specific date is mentioned, or if it's ambiguous (e.g., "soon"), set dueDate to an empty string "". Use today's date (${todayStr}) as the reference for relative dates like "tomorrow", "next week". For phrases like "after X days" or "X days later" from a previous date mentioned in the transcript, calculate the date relative to that *previous* date. For phrases like "on [day number]" (e.g., "on 16th", "on the 3rd"):
+    - If the specified day number is later in the current month (today is ${todayStr}), use that day in the current month and year.
+    - If the specified day number has already passed in the current month, or is the current day, use that day in the *next* month. If the current month is December, roll over to January of the next year.
 
 Full Transcript:
 "{{{fullTranscript}}}"
@@ -110,6 +135,22 @@ Expected JSON Output for 'parsedTasks' (assuming today is ${todayStr}):
     "title": "Buy 5 tons of concrete",
     "description": "Buy 5 tons of concrete",
     "dueDate": "${addDays(new Date(nextMondayStr), 14).toISOString().split('T')[0]}"
+  }
+]
+
+Example 4 (Specific day numbers, current/next month logic):
+Transcript: "Client meeting on 16th and submit report on 10th."
+Expected JSON Output for 'parsedTasks' (assuming today is ${todayStr}):
+[
+  {
+    "title": "Client meeting",
+    "description": "Client meeting",
+    "dueDate": "${exampleDay16thCurrentMonth}"
+  },
+  {
+    "title": "Submit report",
+    "description": "Submit report",
+    "dueDate": "${exampleDay10thNextMonth}"
   }
 ]
 
