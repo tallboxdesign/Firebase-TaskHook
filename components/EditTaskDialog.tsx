@@ -56,10 +56,24 @@ export function EditTaskDialog({ isOpen, onClose, taskToEdit, onSave, settings }
 
   useEffect(() => {
     if (taskToEdit) {
+      let dateForForm: Date;
+      if (taskToEdit.dueDate === null || taskToEdit.dueDate === undefined) {
+        dateForForm = new Date(); // Default to now if dueDate is null or undefined
+      } else {
+        const parsedDate = new Date(taskToEdit.dueDate);
+        // Check if parsedDate is a valid Date object and not "Invalid Date"
+        // An invalid date object will have its time value as NaN
+        if (parsedDate instanceof Date && !isNaN(parsedDate.getTime())) {
+          dateForForm = parsedDate;
+        } else {
+          dateForForm = new Date(); // Default to now if parsing failed or resulted in an invalid date
+        }
+      }
+
       form.reset({
         title: taskToEdit.title,
         description: taskToEdit.description,
-        dueDate: new Date(taskToEdit.dueDate), // Ensure it's a Date object
+        dueDate: dateForForm,
         priority: taskToEdit.priority,
         category: taskToEdit.category,
         tags: taskToEdit.tags || [],
