@@ -131,7 +131,7 @@ const parseVoiceTranscriptFlow = ai.defineFlow(
 
     console.log(`Parsing voice transcript with model: ${modelToUse}. Transcript: "${input.fullTranscript}"`);
     
-    const result = await parseTranscriptPrompt(promptData, { model: modelToUse, apiKey: apiKeyToUse });
+    const result = await parseTranscriptPrompt(promptData, { model: modelToUse });
     const output = result.output;
     const usage = result.usage;
 
@@ -143,6 +143,9 @@ const parseVoiceTranscriptFlow = ai.defineFlow(
         outputTokens: usage?.outputTokens,
       };
     }
+
+    // DEBUG LOG: Inspect raw AI output for date parsing
+    console.log('DEBUG: Raw AI parsedTasks for "on 16th" type input:', JSON.stringify(output.parsedTasks, null, 2));
 
     const validatedTasks = output.parsedTasks.map(task => {
         let validatedDueDate = "";
