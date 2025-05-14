@@ -46,14 +46,13 @@ export function SettingsDialog({
   lastBatchAICost,
   cumulativeTotalAICost 
 }: SettingsDialogProps) {
-console.log('[DEBUG] SettingsDialog rendering. Props currentSettings:', currentSettings);
   const [n8nOutgoingWebhookUrl, setN8nOutgoingWebhookUrl] = useState(currentSettings.n8nWebhookUrl || "");
   const [activeApiKey, setActiveApiKey] = useState(currentSettings.apiKey || ""); 
   const [openaiApiKey, setOpenaiApiKey] = useState(currentSettings.openaiApiKey || ""); 
   const [selectedModel, setSelectedModel] = useState<AIModelId>(currentSettings.selectedAIModel || DEFAULT_AI_MODEL_ID);
   const [appIncomingWebhookUrl, setAppIncomingWebhookUrl] = useState('');
   const [confirmTaskCreation, setConfirmTaskCreation] = useState(currentSettings.confirmTaskCreation ?? false); // Add state for confirmation toggle
-  const [disableIncomingWebhookAuth, setDisableIncomingWebhookAuth] = useState(currentSettings.disableIncomingWebhookAuth ?? DEFAULT_SETTINGS.disableIncomingWebhookAuth ?? false); // Add state for disabling webhook auth
+  const [disableIncomingAuthViaUi, setDisableIncomingAuthViaUi] = useState(currentSettings.disableIncomingWebhookAuth ?? DEFAULT_SETTINGS.disableIncomingWebhookAuth ?? false);
   
   // For user-configurable incoming webhook security
   const [n8nUserConfiguredIncomingHeaderName, setN8nUserConfiguredIncomingHeaderName] = useState(
@@ -72,7 +71,7 @@ console.log('[DEBUG] SettingsDialog rendering. Props currentSettings:', currentS
       setOpenaiApiKey(currentSettings.openaiApiKey || "");
       setSelectedModel(currentSettings.selectedAIModel || DEFAULT_AI_MODEL_ID);
       setConfirmTaskCreation(currentSettings.confirmTaskCreation ?? false); // Set state when dialog opens
-      setDisableIncomingWebhookAuth(currentSettings.disableIncomingWebhookAuth ?? DEFAULT_SETTINGS.disableIncomingWebhookAuth ?? false); // Set state when dialog opens
+      setDisableIncomingAuthViaUi(currentSettings.disableIncomingWebhookAuth ?? DEFAULT_SETTINGS.disableIncomingWebhookAuth ?? false); // Set state when dialog opens
       setN8nUserConfiguredIncomingHeaderName(currentSettings.n8nUserConfiguredIncomingHeaderName || DEFAULT_SETTINGS.n8nUserConfiguredIncomingHeaderName || 'X-TaskHook-Secret'); // Updated Default
       setN8nUserConfiguredIncomingSecret(currentSettings.n8nUserConfiguredIncomingSecret || '');
 
@@ -90,7 +89,7 @@ console.log('[DEBUG] SettingsDialog rendering. Props currentSettings:', currentS
       openaiApiKey, 
       selectedAIModel: selectedModel,
       confirmTaskCreation, // Save the confirmation setting
-      disableIncomingWebhookAuth, // Save the disable webhook auth setting
+      disableIncomingWebhookAuth: disableIncomingAuthViaUi, // Save the UI intent
       n8nUserConfiguredIncomingHeaderName,
       n8nUserConfiguredIncomingSecret,
     });
@@ -290,8 +289,7 @@ Secret Value: ${newSecret}`;
             )}\
           </div>
           
-console.log('[DEBUG] SettingsDialog: Rendering n8n Webhook Configuration card NOW.');
-          <Card className="shadow-md" style={{ border: '5px solid red', backgroundColor: 'yellow' }}>
+          <Card className="shadow-md">
             <CardHeader>
                 <SettingsCardTitle className="text-lg font-semibold flex items-center">
                     <Link className="mr-2 h-5 w-5 text-primary"/>
@@ -350,44 +348,60 @@ console.log('[DEBUG] SettingsDialog: Rendering n8n Webhook Configuration card NO
                         To secure your incoming webhook endpoint (<code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code>):
                     </p>
 
-                    {/* Disable Incoming Webhook Auth Toggle */}
-                    <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="disable-incoming-webhook-auth" className="text-base flex items-center">
-                                <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> Disable Incoming Webhook Authentication
+                    {/* New UI Switch for Disabling Incoming Webhook Auth (UI Intent) */}
+                    <div className="flex flex-row items-start justify-between rounded-lg border p-3 shadow-sm bg-background my-4">
+                        <div className="space-y-1.5 flex-grow pr-4">
+                            <Label htmlFor="disable-incoming-auth-ui" className="text-base flex items-center">
+                                <AlertTriangle className="mr-2 h-5 w-5 text-orange-500" /> Disable Incoming Webhook Authentication (UI Intent)
                             </Label>
-                            <p className="text-sm text-muted-foreground">
-                                Warning: If enabled, requests to <code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code> will NOT require the secret header.
+                            <p className="text-xs text-muted-foreground">
+                                This switch indicates your <strong>intent</strong> for n8n's behavior during testing or specific configurations.
+                                Server-side environment variables ultimately control actual security enforcement and take precedence.
                             </p>
-                            <p className="text-xs text-destructive font-medium">
-                                Only enable this if you understand the security risks or are in a trusted, isolated environment.
-                            </p>
+                            <div className="text-xs text-muted-foreground mt-2 p-2 border rounded-md bg-muted/50 space-y-1">
+                                <p><strong>Important Considerations:</strong></p>
+                                <ul className="list-disc list-inside pl-4">
+                                    <li>If server ENV <code>DISABLE_INCOMING_WEBHOOK_AUTH=true</code>: All auth is bypassed, regardless of this UI switch.</li>
+                                    <li>If server ENV <code>APP_INCOMING_WEBHOOK_HEADER_NAME</code> & <code>APP_INCOMING_WEBHOOK_SECRET_VALUE</code> are set: Server validates against these; this UI switch does not override server validation.</li>
+                                    <li>If <strong>no server ENV auth variables are set</strong>:
+                                        <ul className="list-circle list-inside pl-4">
+                                            <li>UI Switch <strong>ON</strong>: Configure n8n <strong>not</strong> to send secret headers. The fields below for "Header Name" and "Secret Value" will be disabled.</li>
+                                            <li>UI Switch <strong>OFF</strong>: Configure n8n to send headers matching the "Header Name for Secret" and "Secret Value" defined below.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                         <Switch
-                            id="disable-incoming-webhook-auth"
-                            checked={disableIncomingWebhookAuth}
-                            onCheckedChange={setDisableIncomingWebhookAuth}
-                            aria-label="Toggle incoming webhook authentication"
+                            id="disable-incoming-auth-ui"
+                            checked={disableIncomingAuthViaUi}
+                            onCheckedChange={setDisableIncomingAuthViaUi}
+                            aria-label="Toggle user interface intent for disabling incoming webhook authentication"
+                            className="mt-1"
                         />
                     </div>
                     
                     <div className="space-y-1">
-                        <Label htmlFor="n8nIncomingHeaderName" className="text-sm font-medium">Header Name for Secret</Label>
+                        <Label htmlFor="n8nIncomingHeaderName" className={cn("text-sm font-medium", disableIncomingAuthViaUi && "text-muted-foreground/70")}>Header Name for Secret</Label>
                         <Input
                             id="n8nIncomingHeaderName"
                             value={n8nUserConfiguredIncomingHeaderName}
                             onChange={(e) => setN8nUserConfiguredIncomingHeaderName(e.target.value)}
-                            placeholder="e.g., X-TaskHook-Secret" // Updated Placeholder
+                            placeholder="e.g., X-TaskHook-Secret"
+                            disabled={disableIncomingAuthViaUi}
+                            className={cn(disableIncomingAuthViaUi && "bg-muted/50 cursor-not-allowed")}
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label htmlFor="n8nIncomingSecret" className="text-sm font-medium">Secret Value</Label>
+                        <Label htmlFor="n8nIncomingSecret" className={cn("text-sm font-medium", disableIncomingAuthViaUi && "text-muted-foreground/70")}>Secret Value</Label>
                         <Input
                             id="n8nIncomingSecret"
                             type="password"
                             value={n8nUserConfiguredIncomingSecret}
                             onChange={(e) => setN8nUserConfiguredIncomingSecret(e.target.value)}
                             placeholder="Enter a strong, random secret"
+                            disabled={disableIncomingAuthViaUi}
+                            className={cn(disableIncomingAuthViaUi && "bg-muted/50 cursor-not-allowed")}
                         />
                     </div>
                      <Button variant="outline" size="sm" onClick={handleGenerateSecureValues} className="mt-2">
@@ -421,8 +435,6 @@ console.log('[DEBUG] SettingsDialog: Rendering n8n Webhook Configuration card NO
                 </div>
             </CardContent>
           </Card>
-console.log('[DEBUG] SettingsDialog: FINISHED rendering n8n Webhook Configuration card.');
-
         </div>
         <DialogFooter>
           <DialogClose asChild>
