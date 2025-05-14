@@ -44,19 +44,26 @@ interface N8NWebhookTaskPayload {
 }
 
 export async function POST(request: NextRequest) {
-        // ---- START OF NEW LOGGING V4 ----
-        console.log(`[AUTH DEBUG V4] FUNCTION ENTRYPOINT REACHED. Timestamp: ${new Date().toISOString()}`);
-        // ---- END OF NEW LOGGING V4 ----
-        // ---- START OF DETAILED LOGGING V4 ----
-        const receivedSecretV4 = request.headers.get('X-TaskHook-Secret');
-        const expectedSecretV4 = process.env.N8N_WEBHOOK_SECRET;
-        console.log(
-          `[AUTH DEBUG V4] DETAILS. ` +
-          `Received Header ('X-TaskHook-Secret'): '${receivedSecretV4}' (Length: ${receivedSecretV4?.length}). ` +
-          `Expected Env Var ('N8N_WEBHOOK_SECRET'): '${expectedSecretV4}' (Length: ${expectedSecretV4?.length}). ` +
-          `Comparison: ${expectedSecretV4 === receivedSecretV4}.`
-        );
-        // ---- END OF DETAILED LOGGING V4 ----
+        // ---- START OF AUTH DEBUG V5 ----
+        // Helper to avoid printing full secrets. Shows first/last 4 chars + total length.
+        const maskSecret = (s: string) =>
+          s ? `${s.slice(0, 4)}...${s.slice(-4)} (${s.length})` : '<empty>';
+      
+        // Pull raw values once at the very top
+        const receivedSecretRaw = request.headers.get('X-TaskHook-Secret') ?? '';
+        const expectedSecretRaw = process.env.N8N_WEBHOOK_SECRET ?? '';
+      
+        // Normalise (trim) before *any* comparison is done later
+        const receivedSecret = receivedSecretRaw.trim();
+        const expectedSecret = expectedSecretRaw.trim();
+      
+        // Always emit a WARN so Netlify shows it
+        console.warn('[AUTH DEBUG V5]', {
+          received: maskSecret(receivedSecret),
+          expected: maskSecret(expectedSecret),
+          bypassDefault: DEFAULT_APP_SETTINGS.disableIncomingWebhookAuth, // value _before_ Firestore lookup
+        });
+        // ---- END OF AUTH DEBUG V5 ----
   try {
     // Ensure admin is initialized before getting firestore
     if (!admin.apps.length) {
@@ -88,8 +95,10 @@ export async function POST(request: NextRequest) {
 
     if (!disableIncomingWebhookAuth) {
       // Security Check: Validate the secret token using environment variables
-      const expectedHeaderName = 'X-TaskHook-Secret'; // As per new requirement
-      const expectedSecretValue = process.env.N8N_WEBHOOK_SECRET; // As per new requirement
+      const expectedHeaderName = 'X-TaskHook-Secret' as const;
+      // Fetch & sanitise expected secret
+      const expectedSecretValueRaw = process.env.N8N_WEBHOOK_SECRET ?? '';
+      const expectedSecretValue = expectedSecretValueRaw.trim();
 
       if (!expectedSecretValue) {
         console.error('Incoming Webhook Security Error: N8N_WEBHOOK_SECRET is not set on the server. Rejecting request.');
@@ -97,7 +106,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Webhook security (secret) not configured on the server.' }, { status: 500 });
       }
 
-      const requestHeaderValue = request.headers.get(expectedHeaderName);
+      // Fetch & sanitise received header value
+      const requestHeaderValueRaw = request.headers.get(expectedHeaderName) ?? '';
+      const requestHeaderValue = requestHeaderValueRaw.trim();
 
 
       if (!requestHeaderValue || requestHeaderValue !== expectedSecretValue) {
