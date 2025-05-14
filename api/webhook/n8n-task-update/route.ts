@@ -44,6 +44,16 @@ interface N8NWebhookTaskPayload {
 }
 
 export async function POST(request: NextRequest) {
+  // ---- START OF NEW LOGGING V3 ----
+  const receivedSecretV3 = request.headers.get('x-taskhook-secret');
+  const expectedSecretV3 = process.env.N8N_WEBHOOK_SECRET;
+  console.log(
+    `[AUTH RUNTIME DEBUG V3] ENTRYPOINT. ` +
+    `Received Header 'x-taskhook-secret': '${receivedSecretV3}' (Length: ${receivedSecretV3?.length}). ` +
+    `Expected Env Var 'N8N_WEBHOOK_SECRET': '${expectedSecretV3}' (Length: ${expectedSecretV3?.length}). ` +
+    `Comparison: ${expectedSecretV3 === receivedSecretV3}.`
+  );
+  // ---- END OF NEW LOGGING V3 ----
   try {
     // Ensure admin is initialized before getting firestore
     if (!admin.apps.length) {
