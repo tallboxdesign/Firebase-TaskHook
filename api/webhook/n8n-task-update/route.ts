@@ -48,11 +48,11 @@ export async function POST(request: NextRequest) {
         console.log(`[AUTH DEBUG V4] FUNCTION ENTRYPOINT REACHED. Timestamp: ${new Date().toISOString()}`);
         // ---- END OF NEW LOGGING V4 ----
         // ---- START OF DETAILED LOGGING V4 ----
-        const receivedSecretV4 = request.headers.get('x-taskhook-secret'); // Ensure 'x-taskhook-secret' is lowercase for .get()
+        const receivedSecretV4 = request.headers.get('X-TaskHook-Secret');
         const expectedSecretV4 = process.env.N8N_WEBHOOK_SECRET;
         console.log(
           `[AUTH DEBUG V4] DETAILS. ` +
-          `Received Header ('x-taskhook-secret'): '${receivedSecretV4}' (Length: ${receivedSecretV4?.length}). ` +
+          `Received Header ('X-TaskHook-Secret'): '${receivedSecretV4}' (Length: ${receivedSecretV4?.length}). ` +
           `Expected Env Var ('N8N_WEBHOOK_SECRET'): '${expectedSecretV4}' (Length: ${expectedSecretV4?.length}). ` +
           `Comparison: ${expectedSecretV4 === receivedSecretV4}.`
         );
@@ -99,8 +99,6 @@ export async function POST(request: NextRequest) {
 
       const requestHeaderValue = request.headers.get(expectedHeaderName);
 
-const expectedSecret = process.env.N8N_WEBHOOK_SECRET;
-const receivedSecret = request.headers.get(expectedHeaderName); // This uses the 'expectedHeaderName' variable defined earlier
 
       if (!requestHeaderValue || requestHeaderValue !== expectedSecretValue) {
         const clientIp = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
