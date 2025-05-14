@@ -50,14 +50,30 @@ export async function POST(request: NextRequest) {
           s ? `${s.slice(0, 4)}...${s.slice(-4)} (${s.length})` : '<empty>';
       
         // Pull raw values once at the very top
-        const receivedSecretRaw = request.headers.get('X-TaskHook-Secret') ?? '';
-        const expectedSecretRaw = process.env.N8N_WEBHOOK_SECRET ?? '';
+        const headerName =
+          process.env.APP_INCOMING_WEBHOOK_HEADER_NAME?.trim() || 'X-TaskHook-Secret';
+        const receivedSecretRaw = request.headers.get(headerName) ?? '';
+      
+        // Determine which env var supplied the expected secret
+        const envSource = process.env.APP_INCOMING_WEBHOOK_SECRET_VALUE
+          ? 'APP_INCOMING_WEBHOOK_SECRET_VALUE'
+          : 'N8N_WEBHOOK_SECRET';
+        const expectedSecretRaw =
+          process.env.APP_INCOMING_WEBHOOK_SECRET_VALUE ??
+          process.env.N8N_WEBHOOK_SECRET ??
+          '';
       
         // Normalise (trim) before *any* comparison is done later
         const receivedSecret = receivedSecretRaw.trim();
         const expectedSecret = expectedSecretRaw.trim();
       
-        // Always emit a WARN so Netlify shows it
+        // ---- START OF AUTH DEBUG V6 ----
+        console.warn(
+          `[AUTH DEBUG V6] received="${maskSecret(receivedSecret)}" expected="${maskSecret(expectedSecret)}" headerUsed="${headerName}" envSource="${envSource}" bypassDefault=${DEFAULT_APP_SETTINGS.disableIncomingWebhookAuth}`
+        );
+        // ---- END OF AUTH DEBUG V6 ----
+      
+        // Always emit a WARN so Netlify shows it (legacy V5)
         console.warn('[AUTH DEBUG V5]', {
           received: maskSecret(receivedSecret),
           expected: maskSecret(expectedSecret),
