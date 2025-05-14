@@ -44,6 +44,7 @@ interface N8NWebhookTaskPayload {
 }
 
 // Re-trigger build
+// Force new build - attempt 2
 export async function POST(request: NextRequest) {
         // ---- START OF AUTH DEBUG V5 ----
         // Helper to avoid printing full secrets. Shows first/last 4 chars + total length.
