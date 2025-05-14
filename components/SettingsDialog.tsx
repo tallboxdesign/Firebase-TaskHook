@@ -289,7 +289,7 @@ Secret Value: ${newSecret}`;
             )}\
           </div>
           
-          <Card className="shadow-md">
+          <Card className="shadow-md" style={{ border: '5px solid red', backgroundColor: 'yellow' }}>
             <CardHeader>
                 <SettingsCardTitle className="text-lg font-semibold flex items-center">
                     <Link className="mr-2 h-5 w-5 text-primary"/>
@@ -340,7 +340,8 @@ Secret Value: ${newSecret}`;
                 </div>
 
                 {/* Disable Incoming Webhook Auth Toggle */}
-                <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+                <h1 style={{ color: 'magenta', backgroundColor: 'cyan', fontSize: '20px', padding: '10px', textAlign: 'center' }}>DEBUG: N8N WEBHOOK AUTH TOGGLE SECTION IS HERE</h1>
+                <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" style={{ border: '3px dashed blue', backgroundColor: 'lightgreen' }}>
                   <div className="space-y-0.5">
                     <Label htmlFor="disable-incoming-webhook-auth" className="text-base flex items-center">
                       <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> Disable Incoming Webhook Authentication
