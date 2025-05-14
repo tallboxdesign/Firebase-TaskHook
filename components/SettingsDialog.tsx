@@ -339,28 +339,6 @@ Secret Value: ${newSecret}`;
                     </p>
                 </div>
 
-                {/* Disable Incoming Webhook Auth Toggle */}
-                <h1 style={{ color: 'magenta', backgroundColor: 'cyan', fontSize: '20px', padding: '10px', textAlign: 'center' }}>DEBUG: N8N WEBHOOK AUTH TOGGLE SECTION IS HERE</h1>
-                <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" style={{ border: '3px dashed blue', backgroundColor: 'lightgreen' }}>
-                  <div className="space-y-0.5">
-                    <Label htmlFor="disable-incoming-webhook-auth" className="text-base flex items-center">
-                      <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> Disable Incoming Webhook Authentication
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Warning: If enabled, requests to <code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code> will NOT require the secret header.
-                    </p>
-                     <p className="text-xs text-destructive font-medium">
-                      Only enable this if you understand the security risks or are in a trusted, isolated environment.
-                    </p>
-                  </div>
-                  <Switch
-                    id="disable-incoming-webhook-auth"
-                    checked={disableIncomingWebhookAuth}
-                    onCheckedChange={setDisableIncomingWebhookAuth}
-                    aria-label="Toggle incoming webhook authentication"
-                  />
-                </div>
-
                 <div className="space-y-3 p-3 border border-dashed rounded-md bg-muted/30">
                     <div className="flex items-center space-x-2 mb-1">
                         <ShieldCheck className="h-5 w-5 text-orange-600" />
@@ -369,6 +347,27 @@ Secret Value: ${newSecret}`;
                     <p className="text-xs text-muted-foreground">
                         To secure your incoming webhook endpoint (<code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code>):
                     </p>
+
+                    {/* Disable Incoming Webhook Auth Toggle */}
+                    <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="disable-incoming-webhook-auth" className="text-base flex items-center">
+                                <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> Disable Incoming Webhook Authentication
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                Warning: If enabled, requests to <code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code> will NOT require the secret header.
+                            </p>
+                            <p className="text-xs text-destructive font-medium">
+                                Only enable this if you understand the security risks or are in a trusted, isolated environment.
+                            </p>
+                        </div>
+                        <Switch
+                            id="disable-incoming-webhook-auth"
+                            checked={disableIncomingWebhookAuth}
+                            onCheckedChange={setDisableIncomingWebhookAuth}
+                            aria-label="Toggle incoming webhook authentication"
+                        />
+                    </div>
                     
                     <div className="space-y-1">
                         <Label htmlFor="n8nIncomingHeaderName" className="text-sm font-medium">Header Name for Secret</Label>
