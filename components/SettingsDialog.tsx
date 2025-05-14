@@ -342,7 +342,7 @@ Secret Value: ${newSecret}`;
                 <div className="space-y-3 p-3 border border-dashed rounded-md bg-muted/30">
                     <div className="flex items-center space-x-2 mb-1">
                         <ShieldCheck className="h-5 w-5 text-orange-600" />
-                        <Label className="text-base font-medium text-foreground">Incoming Webhook Security</Label>
+                        <Label className="text-base font-medium text-foreground">Incoming Webhook Security (DANGER ZONE)</Label>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         To secure your incoming webhook endpoint (<code>{appIncomingWebhookUrl || "/api/webhook/n8n-task-update"}</code>):
