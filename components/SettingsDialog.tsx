@@ -46,6 +46,7 @@ export function SettingsDialog({
   lastBatchAICost,
   cumulativeTotalAICost 
 }: SettingsDialogProps) {
+console.log('[DEBUG] SettingsDialog rendering. Props currentSettings:', currentSettings);
   const [n8nOutgoingWebhookUrl, setN8nOutgoingWebhookUrl] = useState(currentSettings.n8nWebhookUrl || "");
   const [activeApiKey, setActiveApiKey] = useState(currentSettings.apiKey || ""); 
   const [openaiApiKey, setOpenaiApiKey] = useState(currentSettings.openaiApiKey || ""); 
@@ -289,6 +290,7 @@ Secret Value: ${newSecret}`;
             )}\
           </div>
           
+console.log('[DEBUG] SettingsDialog: Rendering n8n Webhook Configuration card NOW.');
           <Card className="shadow-md" style={{ border: '5px solid red', backgroundColor: 'yellow' }}>
             <CardHeader>
                 <SettingsCardTitle className="text-lg font-semibold flex items-center">
@@ -419,6 +421,7 @@ Secret Value: ${newSecret}`;
                 </div>
             </CardContent>
           </Card>
+console.log('[DEBUG] SettingsDialog: FINISHED rendering n8n Webhook Configuration card.');
 
         </div>
         <DialogFooter>
