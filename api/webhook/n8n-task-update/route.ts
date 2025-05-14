@@ -44,16 +44,19 @@ interface N8NWebhookTaskPayload {
 }
 
 export async function POST(request: NextRequest) {
-  // ---- START OF NEW LOGGING V3 ----
-  const receivedSecretV3 = request.headers.get('x-taskhook-secret');
-  const expectedSecretV3 = process.env.N8N_WEBHOOK_SECRET;
-  console.log(
-    `[AUTH RUNTIME DEBUG V3] ENTRYPOINT. ` +
-    `Received Header 'x-taskhook-secret': '${receivedSecretV3}' (Length: ${receivedSecretV3?.length}). ` +
-    `Expected Env Var 'N8N_WEBHOOK_SECRET': '${expectedSecretV3}' (Length: ${expectedSecretV3?.length}). ` +
-    `Comparison: ${expectedSecretV3 === receivedSecretV3}.`
-  );
-  // ---- END OF NEW LOGGING V3 ----
+        // ---- START OF NEW LOGGING V4 ----
+        console.log(`[AUTH DEBUG V4] FUNCTION ENTRYPOINT REACHED. Timestamp: ${new Date().toISOString()}`);
+        // ---- END OF NEW LOGGING V4 ----
+        // ---- START OF DETAILED LOGGING V4 ----
+        const receivedSecretV4 = request.headers.get('x-taskhook-secret'); // Ensure 'x-taskhook-secret' is lowercase for .get()
+        const expectedSecretV4 = process.env.N8N_WEBHOOK_SECRET;
+        console.log(
+          `[AUTH DEBUG V4] DETAILS. ` +
+          `Received Header ('x-taskhook-secret'): '${receivedSecretV4}' (Length: ${receivedSecretV4?.length}). ` +
+          `Expected Env Var ('N8N_WEBHOOK_SECRET'): '${expectedSecretV4}' (Length: ${expectedSecretV4?.length}). ` +
+          `Comparison: ${expectedSecretV4 === receivedSecretV4}.`
+        );
+        // ---- END OF DETAILED LOGGING V4 ----
   try {
     // Ensure admin is initialized before getting firestore
     if (!admin.apps.length) {
@@ -99,14 +102,6 @@ export async function POST(request: NextRequest) {
 const expectedSecret = process.env.N8N_WEBHOOK_SECRET;
 const receivedSecret = request.headers.get(expectedHeaderName); // This uses the 'expectedHeaderName' variable defined earlier
 
-// ---- START OF NEW LOGGING ----
-console.log(
-  `[AUTH RUNTIME DEBUG V2] ` +
-  `Expected Secret (from env): '${expectedSecret}' (Length: ${expectedSecret?.length}), ` +
-  `Received Secret (from header '${expectedHeaderName}'): '${receivedSecret}' (Length: ${receivedSecret?.length}), ` +
-  `Direct Comparison (expectedSecret === receivedSecret): ${expectedSecret === receivedSecret}`
-);
-// ---- END OF NEW LOGGING ----
       if (!requestHeaderValue || requestHeaderValue !== expectedSecretValue) {
         const clientIp = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
         console.warn(`Unauthorized access attempt to n8n webhook. Header '${expectedHeaderName}' was '${requestHeaderValue ? "provided but incorrect" : "missing"}'. IP: ${clientIp}`);
